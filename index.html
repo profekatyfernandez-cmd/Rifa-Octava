@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rifa Octava Comunidad Catecumenal</title>
+<meta name="description" content="Rifa de la Octava Comunidad Catecumenal: elegí un número del 1 al 100, poné tu nombre y reservá en vivo.">
+
+<!-- ============================================================= -->
+<!--  🔧  PEGÁ AQUÍ TUS CLAVES DE FIREBASE                          -->
+<!--  Reemplazá los valores de abajo por los de tu firebaseConfig  -->
+<!--  (Firebase → Configuración del proyecto → Tus apps → </>)     -->
+<!-- ============================================================= -->
+<script>
+  var firebaseConfig = {
+    apiKey:            "AIzaSyBbOaK9noKsGfGdemO-1nFMXu4vmaCBpWo",
+    authDomain:        "rifa-octava.firebaseapp.com",
+    projectId:         "rifa-octava",
+    storageBucket:     "rifa-octava.firebasestorage.app",
+    messagingSenderId: "340830521503",
+    appId:             "1:340830521503:web:19472310a2d24e7e9efaaa"
+  };
+</script>
+<!-- ============================================================= -->
+
+<style>
+  :root {
+    --bg: #f7f4ec;
+    --surface: #fffdf8;
+    --ink: #2c2a25;
+    --muted: #7a7466;
+    --line: #e4ddcc;
+    --gold: #b8922f;
+    --olive: #5a6340;
+    --olive-deep: #434b2f;
+    --taken: #efe9db;
+    --taken-ink: #a79f8c;
+    --mine: #5a6340;
+    --danger: #a6472e;
+    --shadow: 0 1px 2px rgba(60,50,20,.06), 0 8px 24px rgba(60,50,20,.08);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #1c1a16; --surface: #262219; --ink: #efe9db; --muted: #a79f8c;
+      --line: #3a362b; --gold: #d8b85a; --olive: #93a06a; --olive-deep: #aeb98a;
+      --taken: #2e2a20; --taken-ink: #6b6456; --mine: #93a06a; --danger: #d47a5e;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #1c1a16; --surface: #262219; --ink: #efe9db; --muted: #a79f8c;
+    --line: #3a362b; --gold: #d8b85a; --olive: #93a06a; --olive-deep: #aeb98a;
+    --taken: #2e2a20; --taken-ink: #6b6456; --mine: #93a06a; --danger: #d47a5e;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: "Spectral", Georgia, "Times New Roman", serif;
+    line-height: 1.5; -webkit-font-smoothing: antialiased;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  img { max-width: 100%; }
+  [hidden] { display: none !important; }
+  .wrap {
+    max-width: 560px; margin: 0 auto;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 28px 48px;
+  }
+
+  .header {
+    position: relative; text-align: center; background: var(--surface);
+    border: 1px solid var(--line); border-radius: 18px;
+    padding: 30px 22px 26px; overflow: hidden; box-shadow: var(--shadow);
+  }
+  .header .symbols {
+    position: absolute; inset: 0; opacity: .06; pointer-events: none;
+    display: flex; align-items: center; justify-content: space-between; padding: 0 10px;
+  }
+  .header .symbols svg { width: 64px; height: 64px; fill: var(--ink); }
+  .eyebrow {
+    font-family: "Jost", system-ui, sans-serif; text-transform: uppercase;
+    letter-spacing: .22em; font-size: 11px; font-weight: 500; color: var(--olive);
+    margin: 0 0 6px; position: relative;
+  }
+  h1 {
+    font-family: "Cormorant Garamond", Georgia, serif; font-weight: 600;
+    font-size: clamp(30px, 8vw, 42px); line-height: 1.04; margin: 0;
+    text-wrap: balance; position: relative;
+  }
+  h1 .octava {
+    display: block; font-family: "Jost", system-ui, sans-serif; font-weight: 600;
+    letter-spacing: .14em; font-size: 13px; text-transform: uppercase;
+    color: var(--gold); margin-top: 8px;
+  }
+  .rule { width: 48px; height: 2px; background: var(--gold); margin: 16px auto; border: 0; position: relative; }
+  .prize { font-family: "Jost", system-ui, sans-serif; font-size: 15px; color: var(--ink); margin: 0; position: relative; }
+  .prize strong { color: var(--olive-deep); font-weight: 600; }
+  .meta { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 14px; margin-top: 18px; position: relative; }
+  .meta .chip {
+    font-family: "Jost", system-ui, sans-serif; font-size: 12.5px; background: var(--bg);
+    border: 1px solid var(--line); border-radius: 999px; padding: 7px 14px;
+    display: inline-flex; gap: 6px; align-items: center;
+  }
+  .meta .chip b { color: var(--gold); font-weight: 600; }
+
+  .progress {
+    margin: 22px 2px 4px; font-family: "Jost", system-ui, sans-serif; font-size: 12.5px;
+    color: var(--muted); display: flex; justify-content: space-between; align-items: baseline;
+  }
+  .progress b { color: var(--ink); font-size: 14px; }
+  .bar { height: 6px; background: var(--taken); border-radius: 999px; overflow: hidden; margin: 8px 2px 0; }
+  .bar > i { display: block; height: 100%; background: linear-gradient(90deg, var(--olive), var(--gold)); width: 0%; transition: width .4s ease; }
+
+  .legend {
+    display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin: 18px 0 14px;
+    font-family: "Jost", system-ui, sans-serif; font-size: 12px; color: var(--muted);
+  }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .dot { width: 12px; height: 12px; border-radius: 4px; border: 1px solid var(--line); }
+  .dot.free { background: var(--surface); }
+  .dot.taken { background: var(--taken); }
+  .dot.mine { background: var(--mine); border-color: var(--mine); }
+
+  .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+  @media (min-width: 420px) { .grid { grid-template-columns: repeat(10, 1fr); } }
+  .cell {
+    aspect-ratio: 1; border: 1px solid var(--line); background: var(--surface);
+    border-radius: 10px; font-family: "Jost", system-ui, sans-serif;
+    font-variant-numeric: tabular-nums; font-weight: 500; font-size: 15px; color: var(--ink);
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: transform .08s ease, border-color .15s ease, background .15s ease;
+    position: relative; padding: 0;
+  }
+  .cell:hover:not(:disabled) { border-color: var(--gold); transform: translateY(-1px); }
+  .cell:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  .cell.taken { background: var(--taken); color: var(--taken-ink); cursor: not-allowed; border-color: transparent; }
+  .cell.taken::after {
+    content: ""; position: absolute; width: 62%; height: 1.5px;
+    background: var(--taken-ink); transform: rotate(-18deg); opacity: .5;
+  }
+  .cell.mine { background: var(--mine); color: #fff; border-color: var(--mine); cursor: default; }
+  .cell.mine::after { content: "✓"; position: absolute; top: 2px; right: 4px; font-size: 9px; opacity: .85; }
+  :root[data-theme="dark"] .cell.mine, :root:not([data-theme="light"]) .cell.mine { color: #1c1a16; }
+  @media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .cell.mine { color: #fff; } }
+
+  .loading { text-align: center; color: var(--muted); font-family: "Jost", system-ui, sans-serif; font-size: 13px; padding: 40px 0; }
+
+  .paynote {
+    margin-top: 24px; background: var(--olive-deep); color: #f3f1e6; border-radius: 14px;
+    padding: 18px 20px; text-align: center; font-family: "Jost", system-ui, sans-serif;
+  }
+  .paynote .lbl { font-size: 11px; letter-spacing: .18em; text-transform: uppercase; opacity: .7; }
+  .paynote .num { font-size: 24px; font-weight: 600; letter-spacing: .04em; margin: 4px 0 2px; font-variant-numeric: tabular-nums; }
+  .paynote .who { font-size: 13px; opacity: .85; }
+  .paynote button {
+    margin-top: 12px; background: rgba(255,255,255,.14); color: #fff;
+    border: 1px solid rgba(255,255,255,.25); border-radius: 999px; padding: 8px 18px;
+    font-family: inherit; font-size: 12.5px; cursor: pointer;
+  }
+  .paynote button:active { background: rgba(255,255,255,.26); }
+
+  .footer { text-align: center; color: var(--muted); font-family: "Jost", system-ui, sans-serif; font-size: 11.5px; margin-top: 22px; line-height: 1.6; }
+
+  .overlay {
+    position: fixed; inset: 0; background: rgba(28,24,16,.55); backdrop-filter: blur(2px);
+    display: flex; align-items: flex-end; justify-content: center; z-index: 50; padding: 0;
+  }
+  @media (min-width: 480px) { .overlay { align-items: center; padding: 20px; } }
+  .sheet {
+    background: var(--surface); width: 100%; max-width: 440px; border-radius: 20px 20px 0 0;
+    padding: 24px 22px calc(24px + env(safe-area-inset-bottom, 0px)); box-shadow: var(--shadow);
+    border: 1px solid var(--line);
+  }
+  @media (min-width: 480px) { .sheet { border-radius: 20px; } }
+  .sheet h2 { font-family: "Cormorant Garamond", Georgia, serif; font-size: 26px; font-weight: 600; margin: 0 0 2px; }
+  .sheet .numbadge {
+    display: inline-block; background: var(--gold); color: #fff; font-family: "Jost", sans-serif;
+    font-weight: 600; font-variant-numeric: tabular-nums; border-radius: 8px; padding: 2px 10px;
+    font-size: 14px; margin-bottom: 10px;
+  }
+  .sheet label {
+    display: block; font-family: "Jost", sans-serif; font-size: 12px; text-transform: uppercase;
+    letter-spacing: .1em; color: var(--muted); margin: 14px 0 6px;
+  }
+  .sheet input {
+    width: 100%; font-family: "Spectral", Georgia, serif; font-size: 16px; padding: 12px 14px;
+    border: 1px solid var(--line); border-radius: 10px; background: var(--bg); color: var(--ink);
+  }
+  .sheet input:focus { outline: 2px solid var(--gold); outline-offset: 1px; border-color: var(--gold); }
+  .sheet .err { color: var(--danger); font-family: "Jost", sans-serif; font-size: 12.5px; margin: 10px 0 0; min-height: 1em; }
+  .sheet .actions { display: flex; gap: 10px; margin-top: 18px; }
+  .btn { flex: 1; font-family: "Jost", sans-serif; font-size: 14px; font-weight: 500; padding: 13px; border-radius: 10px; cursor: pointer; border: 1px solid var(--line); }
+  .btn.ghost { background: transparent; color: var(--muted); }
+  .btn.primary { background: var(--olive-deep); color: #fff; border-color: var(--olive-deep); }
+  .btn.primary:disabled { opacity: .5; cursor: wait; }
+  .sheet .confirmed { text-align: center; padding: 8px 0 4px; }
+  .sheet .confirmed .big { font-family: "Cormorant Garamond", serif; font-size: 30px; color: var(--olive); margin: 4px 0; }
+  .toast {
+    position: fixed; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); left: 50%;
+    transform: translateX(-50%); background: var(--danger); color: #fff; font-family: "Jost", sans-serif;
+    font-size: 13px; padding: 11px 18px; border-radius: 999px; z-index: 60; box-shadow: var(--shadow);
+    max-width: 90%; text-align: center;
+  }
+  .setup {
+    margin: 20px 0; background: #fff4d6; color: #5c4a12; border: 1px solid #e3cf8a;
+    border-radius: 12px; padding: 16px 18px; font-family: "Jost", sans-serif; font-size: 13.5px; line-height: 1.55;
+  }
+  .setup b { font-weight: 600; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Spectral:wght@400;600&family=Jost:wght@400;500;600&display=swap">
+</head>
+<body>
+
+<div class="wrap">
+  <header class="header">
+    <div class="symbols" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><path d="M10 2h4v6h6v4h-6v10h-4V12H4V8h6z"/></svg>
+      <svg viewBox="0 0 48 24"><path d="M2 12c6-9 20-10 30-6l12-5-5 11 5 11-12-5C22 22 8 21 2 12zm30-2a2 2 0 100 4 2 2 0 000-4z"/></svg>
+      <svg viewBox="0 0 24 24"><path d="M11 2h2v14h-2zM7 7a5 5 0 005 5 5 5 0 005-5h2a7 7 0 01-6 6.9V16h-2v-2.1A7 7 0 015 7zM3 9a3 3 0 003 3V10a1 1 0 01-1-1zm18 0a1 1 0 01-1 1v2a3 3 0 003-3zM8 20h8v2H8zm2-3h4v2h-4z"/></svg>
+    </div>
+    <p class="eyebrow">Comunidad Catecumenal</p>
+    <h1>Rifa<span class="octava">Octava Comunidad</span></h1>
+    <hr class="rule">
+    <p class="prize"><strong>Reloj inteligente</strong> (negro, correa deportiva)<br>+ <strong>₡50.000 en efectivo</strong></p>
+    <div class="meta">
+      <span class="chip">Cada número <b>₡2.000</b></span>
+      <span class="chip">Sorteo <b>28 nov</b></span>
+      <span class="chip"><b>100</b> números</span>
+    </div>
+  </header>
+
+  <div id="setupMsg" class="setup" hidden>
+    <b>Falta configurar Firebase.</b> Abrí este archivo y pegá tus claves de Firebase en el bloque
+    <b>firebaseConfig</b> (arriba del todo). Mientras tanto la página muestra los números pero no guarda nada compartido.
+  </div>
+
+  <div class="progress">
+    <span>Números vendidos</span>
+    <span><b id="soldCount">—</b> / 100</span>
+  </div>
+  <div class="bar"><i id="barFill"></i></div>
+
+  <div class="legend">
+    <span><i class="dot free"></i> Libre</span>
+    <span><i class="dot taken"></i> Ocupado</span>
+    <span><i class="dot mine"></i> El tuyo</span>
+  </div>
+
+  <div id="gridHost">
+    <div class="loading" id="loadingMsg">Cargando números…</div>
+    <div class="grid" id="grid" hidden></div>
+  </div>
+
+  <div class="paynote">
+    <div class="lbl">Pago · SINPE Móvil</div>
+    <div class="num" id="sinpeNum">6234-3597</div>
+    <div class="who">Gabriel</div>
+    <button id="copySinpe" type="button">Copiar número</button>
+  </div>
+
+  <p class="footer">
+    Elegí un número libre, escribí tu nombre y apellidos, y confirmá.<br>
+    Luego hacé el SINPE de ₡2.000 por cada número a Gabriel.
+  </p>
+</div>
+
+<div id="modalHost"></div>
+<div id="toastHost"></div>
+
+<!-- Firebase (SDK v9 compat, desde CDN permitido por GitHub Pages) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<script>
+(function () {
+  "use strict";
+  var TOTAL = 100;
+  var grid = document.getElementById("grid");
+  var loadingMsg = document.getElementById("loadingMsg");
+  var soldCount = document.getElementById("soldCount");
+  var barFill = document.getElementById("barFill");
+  var modalHost = document.getElementById("modalHost");
+  var toastHost = document.getElementById("toastHost");
+  var setupMsg = document.getElementById("setupMsg");
+
+  var state = {};        // number -> {name}
+  var myNumbers = {};    // reservados por mí (este dispositivo)
+  var cells = {};
+  var db = null;
+
+  try {
+    var saved = localStorage.getItem("rifa_mine");
+    if (saved) myNumbers = JSON.parse(saved) || {};
+  } catch (e) {}
+  function saveMine() { try { localStorage.setItem("rifa_mine", JSON.stringify(myNumbers)); } catch (e) {} }
+
+  var configured = firebaseConfig && firebaseConfig.apiKey && firebaseConfig.apiKey.indexOf("PEGA_") !== 0;
+
+  function buildGrid() {
+    var frag = document.createDocumentFragment();
+    for (var n = 1; n <= TOTAL; n++) {
+      var b = document.createElement("button");
+      b.className = "cell"; b.type = "button"; b.textContent = n;
+      b.setAttribute("data-n", n); b.setAttribute("aria-label", "Número " + n);
+      (function (num, btn) { btn.addEventListener("click", function () { onCellClick(num); }); })(n, b);
+      cells[n] = b; frag.appendChild(b);
+    }
+    grid.appendChild(frag);
+    loadingMsg.hidden = true; grid.hidden = false; render();
+  }
+
+  function render() {
+    var sold = 0;
+    for (var n = 1; n <= TOTAL; n++) {
+      var c = cells[n]; if (!c) continue;
+      var taken = Object.prototype.hasOwnProperty.call(state, n);
+      var mine = Object.prototype.hasOwnProperty.call(myNumbers, n);
+      c.className = "cell"; c.disabled = false;
+      if (mine) { c.className = "cell mine"; sold++; c.disabled = true; c.title = "Reservado por vos: " + (myNumbers[n] || ""); }
+      else if (taken) { c.className = "cell taken"; sold++; c.disabled = true; c.title = "Ocupado"; }
+      else { c.title = "Libre — tocá para reservar"; }
+    }
+    soldCount.textContent = sold;
+    barFill.style.width = (sold / TOTAL * 100) + "%";
+  }
+
+  function toast(msg) {
+    toastHost.innerHTML = "";
+    var t = document.createElement("div"); t.className = "toast"; t.textContent = msg;
+    toastHost.appendChild(t);
+    setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 3600);
+  }
+  function closeModal() { modalHost.innerHTML = ""; }
+
+  function onCellClick(n) {
+    if (Object.prototype.hasOwnProperty.call(state, n) || Object.prototype.hasOwnProperty.call(myNumbers, n)) return;
+    openModal(n);
+  }
+
+  function openModal(n) {
+    var overlay = document.createElement("div");
+    overlay.className = "overlay";
+    overlay.innerHTML =
+      '<div class="sheet" role="dialog" aria-modal="true">' +
+        '<span class="numbadge">Número ' + n + '</span>' +
+        '<h2>Reservar número</h2>' +
+        '<label for="nameInput">Nombre y apellidos</label>' +
+        '<input id="nameInput" type="text" autocomplete="name" placeholder="Ej. María Fernández Rojas" maxlength="60">' +
+        '<p class="err" id="errMsg"></p>' +
+        '<div class="actions">' +
+          '<button class="btn ghost" id="cancelBtn" type="button">Cancelar</button>' +
+          '<button class="btn primary" id="confirmBtn" type="button">Reservar</button>' +
+        '</div>' +
+      '</div>';
+    modalHost.appendChild(overlay);
+    var input = overlay.querySelector("#nameInput");
+    var err = overlay.querySelector("#errMsg");
+    var confirmBtn = overlay.querySelector("#confirmBtn");
+    overlay.querySelector("#cancelBtn").addEventListener("click", closeModal);
+    overlay.addEventListener("click", function (e) { if (e.target === overlay) closeModal(); });
+    setTimeout(function () { input.focus(); }, 50);
+    input.addEventListener("keydown", function (e) { if (e.key === "Enter") confirmBtn.click(); });
+    confirmBtn.addEventListener("click", function () {
+      var name = (input.value || "").trim().replace(/\s+/g, " ");
+      err.textContent = "";
+      if (name.length < 3 || name.indexOf(" ") === -1) {
+        err.textContent = "Escribí tu nombre y al menos un apellido."; input.focus(); return;
+      }
+      confirmBtn.disabled = true; confirmBtn.textContent = "Reservando…";
+      reserve(n, name, overlay, err, confirmBtn);
+    });
+  }
+
+  function showConfirmed(overlay, n, name) {
+    var sheet = overlay.querySelector(".sheet");
+    sheet.innerHTML =
+      '<div class="confirmed">' +
+        '<span class="numbadge">Número ' + n + '</span>' +
+        '<div class="big">¡Reservado!</div>' +
+        '<p style="font-family:Jost,sans-serif;font-size:14px;color:var(--muted);margin:2px 0 4px">A nombre de <b style="color:var(--ink)">' + escapeHtml(name) + '</b></p>' +
+        '<p style="font-family:Jost,sans-serif;font-size:13.5px;margin:14px 0 0">Ahora hacé el SINPE de <b>₡2.000</b> al <b>6234-3597</b> (Gabriel).</p>' +
+        '<div class="actions"><button class="btn primary" id="doneBtn" type="button" style="flex:1">Listo</button></div>' +
+      '</div>';
+    sheet.querySelector("#doneBtn").addEventListener("click", closeModal);
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  // ---- Reserva con transacción (primero en llegar, gana) ----
+  function reserve(n, name, overlay, err, confirmBtn) {
+    if (!db) {
+      myNumbers[n] = name; saveMine(); render();
+      showConfirmed(overlay, n, name); return;
+    }
+    var ref = db.collection("numeros").doc(String(n));
+    db.runTransaction(function (tx) {
+      return tx.get(ref).then(function (doc) {
+        if (doc.exists && doc.data() && doc.data().name) {
+          throw { taken: true };
+        }
+        tx.set(ref, { name: name, ts: Date.now() });
+      });
+    }).then(function () {
+      myNumbers[n] = name; saveMine();
+      state[n] = { name: name }; render();
+      showConfirmed(overlay, n, name);
+    }).catch(function (e) {
+      if (e && e.taken) {
+        state[n] = { name: "ocupado" }; render();
+        failReserve(err, confirmBtn, "Ese número acaba de ocuparse. Elegí otro.");
+      } else {
+        failReserve(err, confirmBtn, "No se pudo reservar. Revisá tu conexión e intentá de nuevo.");
+      }
+    });
+  }
+
+  function failReserve(err, confirmBtn, msg) {
+    err.textContent = msg; confirmBtn.disabled = false; confirmBtn.textContent = "Reservar"; render();
+  }
+
+  document.getElementById("copySinpe").addEventListener("click", function () {
+    var num = "62343597"; var btn = this;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(num).then(function () {
+        btn.textContent = "¡Copiado!"; setTimeout(function () { btn.textContent = "Copiar número"; }, 1800);
+      }).catch(function () { selectText(document.getElementById("sinpeNum")); });
+    } else { selectText(document.getElementById("sinpeNum")); }
+  });
+  function selectText(el) {
+    var r = document.createRange(); r.selectNodeContents(el);
+    var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+  }
+
+  // ---- Boot ----
+  buildGrid();
+
+  if (!configured) {
+    setupMsg.hidden = false;
+    return; // sin claves: funciona como demo local
+  }
+
+  try {
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
+    db.collection("numeros").onSnapshot(function (snap) {
+      var next = {};
+      snap.forEach(function (d) {
+        var data = d.data() || {};
+        if (data.name) next[parseInt(d.id, 10)] = { name: data.name };
+      });
+      state = next; render();
+    }, function (e) { toast("No se pudo conectar a la base. Revisá las reglas de Firestore."); });
+  } catch (e) {
+    setupMsg.hidden = false;
+  }
+})();
+</script>
+</body>
+</html>
